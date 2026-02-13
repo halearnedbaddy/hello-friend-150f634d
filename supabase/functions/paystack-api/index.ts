@@ -555,6 +555,185 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // POST /paystack-api/webhook - Paystack webhook for charge.success
+    if (req.method === "POST" && pathAfter.length === 1 && pathAfter[0] === "webhook") {
+      // Verify webhook signature using HMAC SHA512
+      const signature = req.headers.get("x-paystack-signature") || "";
+      const rawBody = await req.text();
+
+      if (secretKey) {
+        const encoder = new TextEncoder();
+        const key = await crypto.subtle.importKey(
+          "raw",
+          encoder.encode(secretKey),
+          { name: "HMAC", hash: "SHA-512" },
+          false,
+          ["sign"]
+        );
+        const sigBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(rawBody));
+        const computedHash = Array.from(new Uint8Array(sigBuffer))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+
+        if (computedHash !== signature) {
+          console.warn("⚠️ Invalid Paystack webhook signature");
+          return new Response(JSON.stringify({ error: "Invalid signature" }), {
+            status: 401,
+            headers: corsHeaders,
+          });
+        }
+      }
+
+      const event = JSON.parse(rawBody);
+      console.log("📩 Paystack webhook event:", event.event);
+
+      if (event.event === "charge.success") {
+        const data = event.data;
+        const reference = data.reference;
+        const meta = data.metadata || {};
+        const paidAmount = (data.amount || 0) / 100;
+
+        // Handle wallet top-up
+        if (meta.transaction_type === "wallet_topup" && meta.user_id) {
+          const userId = meta.user_id;
+
+          // Check if already processed
+          const { data: existingTx } = await supabase
+            .from("wallet_transactions")
+            .select("id")
+            .eq("reference", reference)
+            .maybeSingle();
+
+          if (!existingTx) {
+            // Get or create wallet
+            let { data: wallet } = await supabase
+              .from("wallets")
+              .select("*")
+              .eq("user_id", userId)
+              .maybeSingle();
+
+            if (!wallet) {
+              const { data: newWallet } = await supabase
+                .from("wallets")
+                .insert({
+                  user_id: userId,
+                  available_balance: 0,
+                  pending_balance: 0,
+                  total_earned: 0,
+                  total_spent: 0,
+                })
+                .select()
+                .single();
+              wallet = newWallet;
+            }
+
+            if (wallet) {
+              const currentBalance = Number(wallet.available_balance) || 0;
+              await supabase
+                .from("wallets")
+                .update({
+                  available_balance: currentBalance + paidAmount,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("user_id", userId);
+
+              await supabase.from("wallet_transactions").insert({
+                user_id: userId,
+                type: "topup",
+                amount: paidAmount,
+                reference,
+                status: "completed",
+                payment_method: "paystack",
+                metadata: {
+                  paystack_reference: reference,
+                  channel: data.channel,
+                  paid_at: data.paid_at,
+                  source: "webhook",
+                },
+              });
+            }
+            console.log(`✅ Webhook: Wallet top-up processed for user ${userId}, amount ${paidAmount}`);
+          }
+        }
+        // Handle regular transaction payment
+        else if (meta.transactionId) {
+          const txnId = meta.transactionId;
+
+          const { data: transaction } = await supabase
+            .from("transactions")
+            .select("id, amount, seller_id, status")
+            .eq("id", txnId)
+            .maybeSingle();
+
+          if (transaction) {
+            const txStatus = (transaction as any).status?.toLowerCase?.() || (transaction as any).status;
+            // Only process if not already paid
+            if (txStatus !== "paid") {
+              const amount = Number(transaction.amount);
+              const fee = (amount * platformFeePercent) / 100;
+              const sellerPayout = amount - fee;
+
+              await supabase
+                .from("transactions")
+                .update({
+                  status: "processing",
+                  payment_reference: reference,
+                  platform_fee: fee,
+                  seller_payout: sellerPayout,
+                  payment_method: "PAYSTACK",
+                  paid_at: new Date().toISOString(),
+                  escrow_status: "pending_confirmation",
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", txnId);
+
+              // Create escrow deposit
+              await supabase.from("escrow_deposits").insert({
+                transaction_id: txnId,
+                amount,
+                currency: "KES",
+                payment_method: "PAYSTACK",
+                payment_reference: reference,
+                payer_name: meta.buyerName || null,
+                payer_phone: meta.buyerPhone || null,
+                status: "pending",
+              });
+
+              // Update seller wallet
+              const { data: wallet } = await supabase
+                .from("wallets")
+                .select("pending_balance")
+                .eq("user_id", transaction.seller_id)
+                .maybeSingle();
+
+              if (wallet) {
+                const currentPending = Number((wallet as any)?.pending_balance) || 0;
+                await supabase
+                  .from("wallets")
+                  .update({
+                    pending_balance: currentPending + sellerPayout,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("user_id", transaction.seller_id);
+              } else {
+                await supabase.from("wallets").insert({
+                  user_id: transaction.seller_id,
+                  pending_balance: sellerPayout,
+                  available_balance: 0,
+                  total_earned: 0,
+                  total_spent: 0,
+                });
+              }
+
+              console.log(`✅ Webhook: Transaction ${txnId} payment processed, amount ${amount}`);
+            }
+          }
+        }
+      }
+
+      return new Response(JSON.stringify({ received: true }), { headers: corsHeaders });
+    }
+
     return new Response(
       JSON.stringify({ success: false, error: "Not found" }),
       { status: 404, headers: corsHeaders }
