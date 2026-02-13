@@ -6,48 +6,52 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/supabaseProject';
 export function PaymentCallbackPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const reference = searchParams.get('reference');
-  const trxnref = searchParams.get('trxref');
+  const reference = searchParams.get('reference') || searchParams.get('trxref');
+  const txnId = searchParams.get('txnId');
   const paymentType = searchParams.get('type');
-  const ref = reference || trxnref;
 
   const [status, setStatus] = useState<'verifying' | 'success' | 'failed'>('verifying');
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    if (!ref) {
+    if (!reference) {
       navigate('/', { replace: true });
       return;
     }
 
     // Handle wallet top-up separately
     if (paymentType === 'topup') {
-      navigate(`/buyer?payment=success&reference=${ref}`, { replace: true });
+      navigate(`/buyer?payment=success&reference=${reference}`, { replace: true });
       return;
     }
 
-    verifyPayment(ref);
-  }, [ref]);
+    verifyPayment(reference);
+  }, [reference]);
 
   const verifyPayment = async (paymentRef: string) => {
     try {
       const response = await fetch(`${SUPABASE_URL}/functions/v1/paystack-api/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
-        body: JSON.stringify({ reference: paymentRef }),
+        body: JSON.stringify({ reference: paymentRef, transactionId: txnId }),
       });
       const result = await response.json();
 
       if (result.success) {
         setStatus('success');
         setMessage('Payment verified successfully!');
-        // Redirect to buy page or success page after short delay
-        const linkId = sessionStorage.getItem('pendingPaymentLinkId');
+
+        // Determine the transactionId for order tracking
+        const orderId = txnId || sessionStorage.getItem('pendingPaymentTxnId');
+        sessionStorage.removeItem('pendingPaymentTxnId');
+        sessionStorage.removeItem('pendingPaymentLinkId');
+
+        // Redirect to order tracking page
         setTimeout(() => {
-          if (linkId) {
-            sessionStorage.removeItem('pendingPaymentLinkId');
-            navigate(`/buy/${linkId}?payment=success&reference=${paymentRef}`, { replace: true });
+          if (orderId) {
+            navigate(`/track/${orderId}`, { replace: true });
           } else {
+            // Fallback: go to buyer dashboard
             navigate(`/buyer?payment=success&reference=${paymentRef}`, { replace: true });
           }
         }, 2000);
@@ -69,7 +73,7 @@ export function PaymentCallbackPage() {
           <>
             <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
             <h2 className="mt-4 text-xl font-bold text-foreground">Verifying Payment...</h2>
-            <p className="mt-2 text-muted-foreground">Please wait while we confirm your payment with Paystack.</p>
+            <p className="mt-2 text-muted-foreground">Please wait while we confirm your payment.</p>
           </>
         )}
         {status === 'success' && (
@@ -79,7 +83,7 @@ export function PaymentCallbackPage() {
             </div>
             <h2 className="mt-4 text-xl font-bold text-foreground">Payment Successful!</h2>
             <p className="mt-2 text-muted-foreground">{message}</p>
-            <p className="mt-1 text-sm text-muted-foreground">Redirecting you shortly...</p>
+            <p className="mt-1 text-sm text-muted-foreground">Redirecting to order tracking...</p>
           </>
         )}
         {status === 'failed' && (

@@ -21,6 +21,7 @@ const BuyPage = lazy(() => import("./pages/BuyPage").then(m => ({ default: m.Buy
 const PaymentPage = lazy(() => import("./pages/PaymentPage").then(m => ({ default: m.PaymentPage })));
 const OrderTrackingPage = lazy(() => import("./pages/OrderTrackingPage").then(m => ({ default: m.OrderTrackingPage })));
 const PaymentSuccessPage = lazy(() => import("./pages/PaymentSuccessPage").then(m => ({ default: m.PaymentSuccessPage })));
+const PaymentCallbackPage = lazy(() => import("./pages/PaymentCallbackPage").then(m => ({ default: m.PaymentCallbackPage })));
 
 // Loading fallback
 const PageLoader = () => (
@@ -50,6 +51,7 @@ function App() {
                 <Route path="/buy/:linkId" element={<BuyPage />} />
                 <Route path="/track/:transactionId" element={<OrderTrackingPage />} />
                 <Route path="/payment-success/:transactionId" element={<PaymentSuccessPage />} />
+                <Route path="/payment/callback" element={<PaymentCallbackPage />} />
                 <Route path="/store/:storeSlug" element={<StoreFrontPage />} />
                 <Route path="/store/:storeSlug/product/:productId" element={<ProductDetailPage />} />
                 <Route path="/legal" element={<LegalPage />} />

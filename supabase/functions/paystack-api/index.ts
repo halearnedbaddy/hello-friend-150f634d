@@ -77,9 +77,8 @@ Deno.serve(async (req: Request) => {
       const amountKobo = Math.round(Number(transaction.amount) * 100);
       const reference = `TXN-${transactionId.slice(0, 8)}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
       const linkId = metadata?.linkId;
-      const callbackUrl = linkId
-        ? `${frontendUrl}/buy/${linkId}?payment=success&reference=${reference}`
-        : `${frontendUrl}/payment/callback?reference=${reference}`;
+      // Always redirect to callback page which verifies then redirects to order tracking
+      const callbackUrl = `${frontendUrl}/payment/callback?reference=${reference}&txnId=${transactionId}`;
 
       const initRes = await fetch("https://api.paystack.co/transaction/initialize", {
         method: "POST",
