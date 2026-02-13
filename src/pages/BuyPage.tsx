@@ -210,8 +210,9 @@ export function BuyPage() {
           throw new Error(paystackResult.error || 'Failed to initialize Paystack payment');
         }
 
-        // Store linkId for callback page redirect
+        // Store IDs for callback page redirect to order tracking
         sessionStorage.setItem('pendingPaymentLinkId', linkId || '');
+        sessionStorage.setItem('pendingPaymentTxnId', orderId);
 
         // Redirect to Paystack hosted checkout page
         window.location.href = paystackResult.data.authorization_url;
