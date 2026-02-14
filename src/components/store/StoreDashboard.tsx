@@ -6,6 +6,10 @@ import { StoreProducts } from './StoreProducts';
 import { StoreOrders } from './StoreOrders';
 
 import { StoreSettings } from './StoreSettings';
+import { ReviewsTab } from '@/components/reviews/ReviewsTab';
+import { FinancialTab } from '@/components/financial/FinancialTab';
+import { LiveChatTab } from '@/components/chat/LiveChatTab';
+import { SupportTab } from '@/components/support/SupportTab';
 import { Menu, X, Bell, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -97,17 +101,17 @@ export function StoreDashboard({ store, onStoreUpdate, onBack }: StoreDashboardP
         return <PlaceholderTab title="Custom Reports" />;
       case 'financial':
       case 'financial-accounting':
-        return <PlaceholderTab title="Accounting" />;
+        return <FinancialTab initialSubTab="dashboard" />;
       case 'financial-tax':
-        return <PlaceholderTab title="Tax Settings" />;
+        return <FinancialTab initialSubTab="tax" />;
       case 'financial-payment-options':
-        return <PlaceholderTab title="Payment Options" />;
+        return <FinancialTab initialSubTab="payment-options" />;
       case 'financial-health':
-        return <PlaceholderTab title="Financial Health" />;
+        return <FinancialTab initialSubTab="health" />;
       case 'live-chat':
-        return <PlaceholderTab title="Live Chat" />;
+        return <LiveChatTab />;
       case 'reviews':
-        return <PlaceholderTab title="Reviews" />;
+        return <ReviewsTab />;
       case 'store-settings':
       case 'store-settings-general':
         return <StoreSettings store={store} onUpdate={onStoreUpdate} />;
@@ -119,9 +123,8 @@ export function StoreDashboard({ store, onStoreUpdate, onBack }: StoreDashboardP
         return <PlaceholderTab title="Invoice Templates" />;
       case 'support':
       case 'support-help':
-        return <PlaceholderTab title="Help Center" />;
       case 'support-tickets':
-        return <PlaceholderTab title="Support Tickets" />;
+        return <SupportTab />;
       case 'support-account-manager':
         return <PlaceholderTab title="Account Manager" />;
       default:

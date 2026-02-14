@@ -864,6 +864,366 @@ export async function createStorefrontCheckout(
   );
 }
 
+// ==================== REVIEWS ====================
+
+export async function getSellerReviews(params: {
+  status?: string;
+  rating?: string;
+  product_id?: string;
+  sort?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { success: false, error: "Not authenticated", data: undefined };
+  const sp = new URLSearchParams();
+  if (params.status) sp.set("status", params.status);
+  if (params.rating) sp.set("rating", params.rating);
+  if (params.product_id) sp.set("product_id", params.product_id);
+  if (params.sort) sp.set("sort", params.sort || "recent");
+  sp.set("page", String(params.page ?? 1));
+  sp.set("limit", String(params.limit ?? 50));
+  const res = await callEdgeFunction<{ data: { reviews: any[]; pagination: any } }>(
+    "store-api",
+    `/reviews?${sp.toString()}`,
+    { method: "GET" }
+  );
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data };
+}
+
+export async function getSellerReviewAnalytics(params?: { start_date?: string; end_date?: string; product_id?: string }) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { success: false, error: "Not authenticated", data: undefined };
+  const sp = new URLSearchParams();
+  if (params?.start_date) sp.set("start_date", params.start_date);
+  if (params?.end_date) sp.set("end_date", params.end_date);
+  if (params?.product_id) sp.set("product_id", params.product_id);
+  const res = await callEdgeFunction<{ data: any }>(
+    "store-api",
+    `/reviews/analytics?${sp.toString()}`,
+    { method: "GET" }
+  );
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data };
+}
+
+export async function respondToReview(reviewId: string, response: string) {
+  const res = await callEdgeFunction("store-api", `/reviews/${reviewId}/respond`, {
+    method: "POST",
+    body: { response },
+  });
+  if (!res.success) return res;
+  return { ...res, data: (res as any).data?.data };
+}
+
+export async function updateReviewStatus(reviewId: string, status: "approved" | "rejected") {
+  const res = await callEdgeFunction("store-api", `/reviews/${reviewId}/status`, {
+    method: "PATCH",
+    body: { status },
+  });
+  if (!res.success) return res;
+  return { ...res, data: (res as any).data?.data };
+}
+
+export async function bulkUpdateReviewStatus(reviewIds: string[], status: "approved" | "rejected") {
+  return callEdgeFunction("store-api", "/reviews/bulk-update", {
+    method: "POST",
+    body: { review_ids: reviewIds, status },
+  });
+}
+
+export async function getProductReviews(
+  storeSlug: string,
+  productId: string,
+  params?: { rating?: string; sort?: string; page?: number; limit?: number }
+) {
+  const sp = new URLSearchParams();
+  if (params?.rating) sp.set("rating", params.rating);
+  if (params?.sort) sp.set("sort", params.sort || "recent");
+  sp.set("page", String(params?.page ?? 1));
+  sp.set("limit", String(params?.limit ?? 20));
+  const res = await callEdgeFunction<{ data: { reviews: any[]; pagination: any } }>(
+    "storefront-api",
+    `/product/${encodeURIComponent(storeSlug)}/${encodeURIComponent(productId)}/reviews?${sp.toString()}`,
+    { method: "GET" }
+  );
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data };
+}
+
+export async function getProductReviewSummary(storeSlug: string, productId: string) {
+  const res = await callEdgeFunction<{ data: any }>(
+    "storefront-api",
+    `/product/${encodeURIComponent(storeSlug)}/${encodeURIComponent(productId)}/reviews/summary`,
+    { method: "GET" }
+  );
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data };
+}
+
+// ==================== FINANCIAL ====================
+
+export async function getFinancialDashboard(period?: string) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { success: false, error: "Not authenticated", data: undefined };
+  const sp = new URLSearchParams();
+  if (period) sp.set("period", period);
+  const res = await callEdgeFunction<{ data: any }>(
+    "store-api",
+    `/financial/dashboard?${sp.toString()}`,
+    { method: "GET" }
+  );
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data };
+}
+
+export async function getFinancialExpenses(params?: {
+  category?: string;
+  start_date?: string;
+  end_date?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { success: false, error: "Not authenticated", data: undefined };
+  const sp = new URLSearchParams();
+  if (params?.category) sp.set("category", params.category);
+  if (params?.start_date) sp.set("start_date", params.start_date);
+  if (params?.end_date) sp.set("end_date", params.end_date);
+  sp.set("page", String(params?.page ?? 1));
+  sp.set("limit", String(params?.limit ?? 50));
+  const res = await callEdgeFunction<{ data: any }>(
+    "store-api",
+    `/financial/expenses?${sp.toString()}`,
+    { method: "GET" }
+  );
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data };
+}
+
+export async function createExpense(data: {
+  amount: number;
+  category: string;
+  description: string;
+  vendor_name?: string;
+  expense_date: string;
+  is_tax_deductible?: boolean;
+}) {
+  const res = await callEdgeFunction("store-api", "/financial/expenses", {
+    method: "POST",
+    body: data,
+  });
+  if (!res.success) return res;
+  return { ...res, data: (res as any).data?.data };
+}
+
+export async function updateExpense(id: string, updates: Partial<{
+  amount: number;
+  category: string;
+  description: string;
+  vendor_name: string;
+  expense_date: string;
+}>) {
+  const res = await callEdgeFunction("store-api", `/financial/expenses/${id}`, {
+    method: "PATCH",
+    body: updates,
+  });
+  if (!res.success) return res;
+  return { ...res, data: (res as any).data?.data };
+}
+
+export async function deleteExpense(id: string) {
+  return callEdgeFunction("store-api", `/financial/expenses/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getProfitLossReport(params?: { start_date?: string; end_date?: string }) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { success: false, error: "Not authenticated", data: undefined };
+  const sp = new URLSearchParams();
+  if (params?.start_date) sp.set("start_date", params.start_date);
+  if (params?.end_date) sp.set("end_date", params.end_date);
+  const res = await callEdgeFunction<{ data: any }>(
+    "store-api",
+    `/financial/reports/profit-loss?${sp.toString()}`,
+    { method: "GET" }
+  );
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data };
+}
+
+export async function getTaxReport(params?: { year?: number; quarter?: string }) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { success: false, error: "Not authenticated", data: undefined };
+  const sp = new URLSearchParams();
+  if (params?.year) sp.set("year", String(params.year));
+  if (params?.quarter) sp.set("quarter", params.quarter || "");
+  const res = await callEdgeFunction<{ data: any }>(
+    "store-api",
+    `/financial/reports/tax?${sp.toString()}`,
+    { method: "GET" }
+  );
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data };
+}
+
+export async function getReviewableOrders(storeSlug: string, productId: string) {
+  const res = await callEdgeFunction<{ data: { id: string; created_at: string; item_name?: string }[] }>(
+    "storefront-api",
+    `/product/${encodeURIComponent(storeSlug)}/${encodeURIComponent(productId)}/reviewable-orders`,
+    { method: "GET" }
+  );
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data ?? [] };
+}
+
+// Review submission (storefront - customer)
+export async function submitProductReview(
+  storeSlug: string,
+  productId: string,
+  data: { order_id: string; rating: number; title?: string; content: string; images?: string[] }
+) {
+  return callEdgeFunction("storefront-api", `/product/${encodeURIComponent(storeSlug)}/${encodeURIComponent(productId)}/review`, {
+    method: "POST",
+    body: data,
+  });
+}
+
+export async function markReviewHelpful(reviewId: string, isHelpful: boolean) {
+  return callEdgeFunction("storefront-api", `/reviews/${reviewId}/helpful`, {
+    method: "POST",
+    body: { is_helpful: isHelpful },
+  });
+}
+
+export async function reportReview(reviewId: string, reason: string, description?: string) {
+  return callEdgeFunction("storefront-api", `/reviews/${reviewId}/report`, {
+    method: "POST",
+    body: { reason, description },
+  });
+}
+
+export async function getRequestableOrders() {
+  const res = await callEdgeFunction<{ data: { id: string; item_name?: string; created_at: string; product_id?: string }[] }>(
+    "store-api",
+    "/reviews/requestable-orders",
+    { method: "GET" }
+  );
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data ?? [] };
+}
+
+export async function sendReviewRequests(orderIds: string[], sendVia = "email", delayDays = 0) {
+  return callEdgeFunction("store-api", "/reviews/request", {
+    method: "POST",
+    body: { order_ids: orderIds, send_via: sendVia, delay_days: delayDays },
+  });
+}
+
+export async function getReviewAutoRequestConfig() {
+  const res = await callEdgeFunction<{ data: any }>("store-api", "/reviews/auto-request/config", { method: "GET" });
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data };
+}
+
+export async function updateReviewAutoRequestConfig(data: {
+  enabled?: boolean;
+  delay_days?: number;
+  send_via?: string;
+}) {
+  return callEdgeFunction("store-api", "/reviews/auto-request/config", {
+    method: "POST",
+    body: data,
+  });
+}
+
+// Live Chat
+export async function getChatConversations() {
+  const res = await callEdgeFunction<{ data: any }>("store-api", "/chat/conversations", { method: "GET" });
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data };
+}
+
+export async function getChatConversation(conversationId: string) {
+  const res = await callEdgeFunction<{ data: any }>("store-api", `/chat/conversations/${conversationId}`, { method: "GET" });
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data };
+}
+
+export async function sendChatMessage(conversationId: string, message: string) {
+  return callEdgeFunction("store-api", `/chat/conversations/${conversationId}/messages`, {
+    method: "POST",
+    body: { message },
+  });
+}
+
+export async function sendStoreChatMessage(storeSlug: string, message: string, customerName?: string, customerEmail?: string) {
+  return callEdgeFunction("storefront-api", `/store/${encodeURIComponent(storeSlug)}/chat`, {
+    method: "POST",
+    body: { message, customer_name: customerName, customer_email: customerEmail },
+  });
+}
+
+// Support
+export async function getSupportTickets() {
+  const res = await callEdgeFunction<{ data: any }>("store-api", "/support/tickets", { method: "GET" });
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data };
+}
+
+export async function createSupportTicket(data: { subject: string; category?: string; priority?: string; message?: string }) {
+  return callEdgeFunction("store-api", "/support/tickets", {
+    method: "POST",
+    body: data,
+  });
+}
+
+export async function getSupportTicket(ticketId: string) {
+  const res = await callEdgeFunction<{ data: any }>("store-api", `/support/tickets/${ticketId}`, { method: "GET" });
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data };
+}
+
+export async function addSupportMessage(ticketId: string, message: string) {
+  return callEdgeFunction("store-api", `/support/tickets/${ticketId}/messages`, {
+    method: "POST",
+    body: { message },
+  });
+}
+
+// Product Q&A
+export async function getProductQuestions(storeSlug: string, productId: string) {
+  const res = await callEdgeFunction<{ data: any }>(
+    "storefront-api",
+    `/product/${encodeURIComponent(storeSlug)}/${encodeURIComponent(productId)}/questions`,
+    { method: "GET" }
+  );
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data };
+}
+
+export async function askProductQuestion(storeSlug: string, productId: string, question: string) {
+  return callEdgeFunction("storefront-api", `/product/${encodeURIComponent(storeSlug)}/${encodeURIComponent(productId)}/question`, {
+    method: "POST",
+    body: { question },
+  });
+}
+
+export async function getSellerQuestions() {
+  const res = await callEdgeFunction<{ data: any[] }>("store-api", "/reviews/questions", { method: "GET" });
+  if (!res.success) return res;
+  return { ...res, data: res.data?.data ?? [] };
+}
+
+export async function answerProductQuestion(questionId: string, answer: string) {
+  return callEdgeFunction("store-api", `/questions/${questionId}/answer`, {
+    method: "POST",
+    body: { answer },
+  });
+}
+
 // ==================== PAYSTACK (Edge: paystack-api) ====================
 
 export async function getPaystackConfig() {

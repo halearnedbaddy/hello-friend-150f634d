@@ -5,6 +5,9 @@ import {
   ArrowLeft, Loader2, Package, CheckCircle, Shield, Star, Share2, Heart, ChevronRight, ShoppingCart
 } from 'lucide-react';
 import { ManualCheckoutModal } from '@/components/ManualCheckoutModal';
+import { ReviewWidget } from '@/components/reviews/ReviewWidget';
+import { ProductQA } from '@/components/reviews/ProductQA';
+import { StorefrontChatWidget } from '@/components/chat/StorefrontChatWidget';
 
 const SUPABASE_URL = "https://pxyyncsnjpuwvnwyfdwx.supabase.co";
 
@@ -288,7 +291,21 @@ export function ProductDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Reviews */}
+        {storeSlug && product && (
+          <ReviewWidget storeSlug={storeSlug} productId={product.id} />
+        )}
+
+        {/* Product Q&A */}
+        {storeSlug && product && (
+          <ProductQA storeSlug={storeSlug} productId={product.id} />
+        )}
       </main>
+
+      {storeSlug && (
+        <StorefrontChatWidget storeSlug={storeSlug} storeName={product?.store?.name} />
+      )}
 
       {/* Manual Checkout Modal */}
       {product && storeSlug && (

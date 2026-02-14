@@ -5,6 +5,7 @@ import {
   Search, ShoppingCart, Star, ChevronDown, Package, Shield, Clock, Heart, Share2,
   CheckCircle, Loader2, AlertCircle, Store as StoreIcon, ArrowLeft
 } from 'lucide-react';
+import { StorefrontChatWidget } from '@/components/chat/StorefrontChatWidget';
 
 const SUPABASE_URL = "https://pxyyncsnjpuwvnwyfdwx.supabase.co";
 
@@ -475,6 +476,10 @@ export function StoreFrontPage() {
           </div>
         </div>
       </footer>
+
+      {storeSlug && (
+        <StorefrontChatWidget storeSlug={storeSlug} storeName={store?.name} />
+      )}
     </div>
   );
 }

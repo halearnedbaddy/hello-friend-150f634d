@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.sms-notifications]
 verify_jwt = false
+
+[functions.review-requests-job]
+verify_jwt = false
