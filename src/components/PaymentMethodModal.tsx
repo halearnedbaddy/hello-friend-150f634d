@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 
 interface PaymentMethodOption {
   id: string;
-  type: 'paystack' | 'mpesa';
+  type: 'pesapal' | 'mpesa';
   name: string;
   description: string;
   icon: React.ReactNode;
@@ -27,7 +27,7 @@ interface PaymentMethodModalProps {
 const defaultMethods: PaymentMethodOption[] = [
   {
     id: 'pesapal-checkout',
-    type: 'paystack',
+    type: 'pesapal',
     name: 'Pay via Pesapal',
     description: 'Cards, M-Pesa STK Push, Bank Transfer',
     icon: (

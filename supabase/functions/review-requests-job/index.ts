@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     for (const s of settings) {
       const { data: orders } = await supabase
         .from("transactions")
-        .select("id, buyer_id, product_id, completed_at")
+        .select("id, buyer_id, product_id, completed_at, created_at")
         .eq("seller_id", s.seller_id)
         .or("status.eq.completed,status.eq.delivered")
         .lte("completed_at", cutoff + "T23:59:59")

@@ -30,7 +30,7 @@ export function PaymentCallbackPage() {
 
   const verifyPayment = async (paymentRef: string) => {
     try {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/paystack-api/verify`, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/pesapal-api/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
         body: JSON.stringify({ reference: paymentRef, transactionId: txnId }),
