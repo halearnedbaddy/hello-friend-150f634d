@@ -62,7 +62,7 @@ export function HomePage() {
               Your Products. Our Sellers. <span className="pl-grad">One Powerful Marketplace.</span>
             </h1>
             <p>
-              Halearnedu Web provides the products — our verified sellers create stores and sell them to buyers everywhere. All payments flow through one secure Paystack merchant account.
+              Halearnedu Web provides the products — our verified sellers create stores and sell them to buyers everywhere. All payments flow through one secure Pesapal merchant account.
             </p>
             <div className="pl-hero-btns">
               <Link to="/signup" className="pl-btn-hero">
@@ -96,7 +96,7 @@ export function HomePage() {
             </div>
             <div className="pl-float-card pl-fc2">
               <div className="pl-fc-label">Payment confirmed</div>
-              <div className="pl-fc-value">Paystack ✓</div>
+              <div className="pl-fc-value">Pesapal ✓</div>
             </div>
             <div className="pl-float-card pl-fc3">
               <div className="pl-fc-label">Store visits today</div>
@@ -120,7 +120,7 @@ export function HomePage() {
                     <div className="pl-p-img">📱</div>
                     <div className="pl-p-pname">Smart Watch Pro X</div>
                     <div className="pl-p-price">₦45,000</div>
-                    <button className="pl-p-btn">Pay with Paystack →</button>
+                    <button className="pl-p-btn">Pay with Pesapal →</button>
                   </div>
                   <div className="pl-p-success">
                     <div className="pl-p-success-icon">✓</div>
@@ -188,7 +188,7 @@ export function HomePage() {
           <div className="pl-section-label">Features</div>
           <div className="pl-section-title">Everything built for sellers & buyers</div>
           <div className="pl-section-sub">
-            Powerful tools for sellers to manage stores, and a seamless buying experience for customers — all powered by Paystack.
+            Powerful tools for sellers to manage stores, and a seamless buying experience for customers — all powered by Pesapal.
           </div>
         </div>
 
@@ -216,7 +216,7 @@ export function HomePage() {
             </div>
             <h3>One merchant. Total security.</h3>
             <p>
-              All payments flow through Halearnedu Web's Paystack merchant account. Buyers pay securely, sellers earn commissions.
+              All payments flow through Halearnedu Web's Pesapal merchant account. Buyers pay securely, sellers earn commissions.
             </p>
             <div style={{ marginTop: '1.5rem' }}>
               <img src={secureImg} alt="Secure payment processing" style={{ width: '100%', borderRadius: 12, boxShadow: '0 4px 20px rgba(10,12,24,0.08)' }} />
@@ -231,11 +231,11 @@ export function HomePage() {
             </div>
             <h3>Shop with total confidence</h3>
             <p>
-              All payments are processed securely through Paystack. If something goes wrong, we issue a full refund — no questions asked.
+              All payments are processed securely through Pesapal. If something goes wrong, we issue a full refund — no questions asked.
             </p>
             <div className="pl-payment-flow">
               {[
-                { icon: '💳', bg: '#ebf0ff', text: 'Pay via Paystack or M-Pesa', sub: 'Card, Paybill, or bank transfer' },
+                { icon: '💳', bg: '#ebf0ff', text: 'Pay via Pesapal or M-Pesa', sub: 'Card, Paybill, or bank transfer' },
                 { icon: '🔍', bg: '#fff3eb', text: 'Every order is tracked', sub: 'Full visibility from purchase to delivery' },
                 { icon: '💰', bg: 'rgba(6,214,160,0.1)', text: 'Easy refunds if issues arise', sub: 'Refund processed within 48 hours' },
               ].map((step, i) => (
@@ -386,7 +386,7 @@ export function HomePage() {
               {
                 num: '3',
                 title: 'Earn on every sale',
-                text: 'When a buyer purchases from your store, payment goes through Paystack. You earn your commission and can withdraw anytime.',
+                text: 'When a buyer purchases from your store, payment goes through Pesapal. You earn your commission and can withdraw anytime.',
               },
             ].map((step, i) => (
               <div key={i} className={`pl-how-step fade-up${i > 0 ? ` delay-${i}` : ''}`} ref={addFadeRef}>
@@ -406,7 +406,7 @@ export function HomePage() {
             <div className="pl-hv-step">
               <div className="pl-hv-icon">💳</div>
               <div className="pl-hv-label">Buyer pays via</div>
-              <div className="pl-hv-value">Paystack</div>
+              <div className="pl-hv-value">Pesapal</div>
             </div>
             <div className="pl-how-vis-divider" />
             <div className="pl-hv-step">
@@ -440,7 +440,7 @@ export function HomePage() {
                 role: 'Seller, Lagos',
               },
               {
-                text: '"The Paystack integration is seamless. My customers pay with cards, bank transfers, even USSD — and I get my commissions within hours."',
+                text: '"The Pesapal integration is seamless. My customers pay with cards, bank transfers, even USSD — and I get my commissions within hours."',
                 initials: 'NK',
                 bg: 'linear-gradient(135deg,#06d6a0,#00b4d8)',
                 name: 'Ngozi Kalu',

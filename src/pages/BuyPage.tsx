@@ -61,7 +61,7 @@ export function BuyPage() {
   const [submitting, setSubmitting] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
-  const [paystackSuccess, setPaystackSuccess] = useState(false);
+  const [pesapalSuccess, setPesapalSuccess] = useState(false);
 
   const [buyerInfo, setBuyerInfo] = useState({
     name: '',
@@ -75,7 +75,7 @@ export function BuyPage() {
     const paymentStatus = searchParams.get('payment');
     const reference = searchParams.get('reference');
     if (paymentStatus === 'success' && reference) {
-      setPaystackSuccess(true);
+      setPesapalSuccess(true);
       setShowCheckout(true);
       setCheckoutStep('success');
       setTransactionCode(reference);
@@ -112,7 +112,7 @@ export function BuyPage() {
   };
 
   const loadSellerMethods = async (_sellerId: string) => {
-    // Hardcoded payment methods: Paystack + M-Pesa Paybill
+    // Hardcoded payment methods: Pesapal + M-Pesa Paybill
     const hardcodedMethods: SellerPaymentMethod[] = [
       {
         id: 'pesapal-checkout',
@@ -631,18 +631,18 @@ export function BuyPage() {
                     <CheckCircleIcon size={32} className="text-primary" />
                   </div>
                   <h3 className="text-lg font-bold text-foreground mb-2">
-                   {paystackSuccess ? 'Payment Successful!' : 'Payment Submitted!'}
+                   {pesapalSuccess ? 'Payment Successful!' : 'Payment Submitted!'}
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    {paystackSuccess
+                    {pesapalSuccess
                       ? 'Your payment has been confirmed via Pesapal. Your order is being processed.'
                       : 'Your payment is being reviewed. You\'ll be notified once it\'s approved.'}
                   </p>
                   <div className="bg-muted rounded-lg p-4 text-left text-sm space-y-2 mb-4">
                     {transactionId && <p>Order ID: <span className="font-mono font-bold">{transactionId}</span></p>}
                     {transactionCode && <p>Reference: <span className="font-mono font-bold">{transactionCode}</span></p>}
-                    <p>Status: <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${paystackSuccess ? 'bg-green-100 text-green-700' : 'bg-accent/20 text-accent'}`}>
-                      {paystackSuccess ? 'Confirmed' : 'Under Review'}
+                    <p>Status: <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${pesapalSuccess ? 'bg-green-100 text-green-700' : 'bg-accent/20 text-accent'}`}>
+                      {pesapalSuccess ? 'Confirmed' : 'Under Review'}
                     </span></p>
                   </div>
                   <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-sm text-left mb-4">
@@ -651,7 +651,7 @@ export function BuyPage() {
                   </div>
                   <button onClick={() => { setShowCheckout(false); setCheckoutStep('details'); }}
                     className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition">
-                    {paystackSuccess ? 'Done' : 'View Payment Status'}
+                    {pesapalSuccess ? 'Done' : 'View Payment Status'}
                   </button>
                 </div>
               )}
@@ -674,7 +674,7 @@ export function BuyPage() {
         }}
         methods={sellerMethods.map(m => ({
           id: m.id,
-          type: m.payment_type === 'PESAPAL' ? 'paystack' as const : 'mpesa' as const,
+          type: m.payment_type === 'PESAPAL' ? 'pesapal' as const : 'mpesa' as const,
           name: m.payment_type === 'PESAPAL' ? 'Pay via Pesapal' : `Pay via ${m.provider}`,
           description: m.payment_type === 'PESAPAL'
             ? 'Cards, M-Pesa STK Push, Bank Transfer'

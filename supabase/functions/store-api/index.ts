@@ -784,7 +784,7 @@ Deno.serve(async (req) => {
       const r = reviews || [];
       const total = r.length;
       const avg = total > 0 ? r.reduce((s, x) => s + (x.rating || 0), 0) / total : 0;
-      const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+      const dist: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
       r.forEach((x) => { dist[Math.min(5, Math.max(1, x.rating || 0))]++; });
       const withPhotos = r.filter((x) => Array.isArray(x.images) && x.images.length > 0).length;
       const withVideos = r.filter((x) => !!x.video_url).length;
