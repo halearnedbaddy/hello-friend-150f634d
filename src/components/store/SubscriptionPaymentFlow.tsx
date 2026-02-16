@@ -3,7 +3,7 @@ import { XIcon, CheckCircleIcon, LoaderIcon } from '@/components/icons';
 import { getPlanById } from '@/config/subscriptionPlans';
 import { validateTransactionCode } from '@/lib/transactionValidation';
 
-type FlowStep = 'choose-method' | 'paybill' | 'processing' | 'success' | 'trial';
+type FlowStep = 'choose-method' | 'pesapal-options' | 'paybill' | 'processing' | 'success' | 'trial';
 
 interface SubscriptionPaymentFlowProps {
   open: boolean;
@@ -20,6 +20,7 @@ export function SubscriptionPaymentFlow({ open, onClose, planId, billingCycle, m
   const [mpesaCode, setMpesaCode] = useState('');
   const [mpesaMessage, setMpesaMessage] = useState('');
   const [verifyError, setVerifyError] = useState('');
+  const [pesapalMethod, setPesapalMethod] = useState<'card' | 'mpesa' | null>(null);
 
   const plan = getPlanById(planId);
   if (!open || !plan) return null;
@@ -57,6 +58,7 @@ export function SubscriptionPaymentFlow({ open, onClose, planId, billingCycle, m
     setMpesaMessage('');
     setVerifyError('');
     setProcessing(false);
+    setPesapalMethod(null);
   };
 
   return (
@@ -89,7 +91,7 @@ export function SubscriptionPaymentFlow({ open, onClose, planId, billingCycle, m
             <div className="space-y-3">
               {/* Pesapal Option */}
               <button
-                onClick={() => { alert('Redirecting to Pesapal checkout...'); }}
+                onClick={() => { setPesapalMethod(null); setStep('pesapal-options'); }}
                 className="w-full flex items-center gap-4 p-4 border-2 border-border rounded-xl hover:border-primary/60 hover:bg-primary/5 transition text-left"
               >
                 <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white font-bold text-sm" style={{ background: '#00a86b' }}>
@@ -97,7 +99,7 @@ export function SubscriptionPaymentFlow({ open, onClose, planId, billingCycle, m
                 </div>
                 <div>
                   <p className="font-semibold text-foreground text-sm">Pay via Pesapal</p>
-                  <p className="text-xs text-muted-foreground">Cards, M-Pesa STK Push, Bank Transfer</p>
+                  <p className="text-xs text-muted-foreground">Cards, M-Pesa STK Push</p>
                 </div>
               </button>
 
@@ -118,6 +120,63 @@ export function SubscriptionPaymentFlow({ open, onClose, planId, billingCycle, m
 
             <button onClick={onClose} className="w-full mt-4 text-sm text-muted-foreground hover:text-foreground transition py-2">
               Maybe Later
+            </button>
+          </div>
+        )}
+
+        {/* Pesapal Sub-Options */}
+        {step === 'pesapal-options' && (
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-foreground">Pay via Pesapal</h3>
+              <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition">
+                <XIcon size={20} />
+              </button>
+            </div>
+
+            <div className="bg-muted/50 rounded-xl p-4 mb-5">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-muted-foreground">Plan</span>
+                <span className="font-medium text-foreground">{plan.name}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Amount</span>
+                <span className="font-bold text-foreground">KES {price.toLocaleString()}/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
+              </div>
+            </div>
+
+            <p className="text-sm font-medium text-foreground mb-3">Select Pesapal method:</p>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => { setPesapalMethod('card'); alert('Redirecting to Pesapal card checkout...'); }}
+                className={`w-full flex items-center gap-4 p-4 border-2 rounded-xl hover:border-primary/60 hover:bg-primary/5 transition text-left ${pesapalMethod === 'card' ? 'border-primary bg-primary/5' : 'border-border'}`}
+              >
+                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-xl" style={{ background: '#e8f5e9' }}>
+                  💳
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground text-sm">Pay with Card</p>
+                  <p className="text-xs text-muted-foreground">Visa, Mastercard, AMEX</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => { setPesapalMethod('mpesa'); alert('Redirecting to Pesapal M-Pesa checkout...'); }}
+                className={`w-full flex items-center gap-4 p-4 border-2 rounded-xl hover:border-primary/60 hover:bg-primary/5 transition text-left ${pesapalMethod === 'mpesa' ? 'border-primary bg-primary/5' : 'border-border'}`}
+              >
+                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold text-lg" style={{ background: '#d4f4dd', color: '#00a86b' }}>
+                  M
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground text-sm">Pay with M-Pesa</p>
+                  <p className="text-xs text-muted-foreground">STK Push to your phone</p>
+                </div>
+              </button>
+            </div>
+
+            <button onClick={resetFlow} className="w-full mt-4 text-sm text-muted-foreground hover:text-foreground transition py-2">
+              ← Back to payment methods
             </button>
           </div>
         )}
